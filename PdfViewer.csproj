@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>KlingelingPdfViewer</AssemblyName>
+    <Version>1.0.0</Version>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Product>Klingeling PdfViewer</Product>
+    <AssemblyTitle>Klingeling PdfViewer</AssemblyTitle>
+  </PropertyGroup>
+
+  <!-- Publish as ONE self-contained exe: .NET runtime, WPF and the native DLLs
+       (pdfium.dll, wpfgfx_cor3.dll, ...) are packed into the exe and unpacked to a
+       temp folder on first start. Nothing has to be installed or copied next to it. -->
+  <PropertyGroup>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Page rendering (PDFium) -->
+    <PackageReference Include="Docnet.Core" Version="2.6.0" />
+    <!-- Text and bookmark extraction -->
+    <PackageReference Include="PdfPig" Version="0.1.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Third-party license texts: embedded in the exe (shown in Help > About > Licenses)
+         and also copied next to the exe, as the licenses require.
+         TODO: check the PDFium section in this file against the license files that ship
+         inside the Docnet.Core NuGet package (it bundles the native PDFium binary). -->
+    <None Remove="THIRD-PARTY-NOTICES.txt" />
+    <EmbeddedResource Include="THIRD-PARTY-NOTICES.txt" LogicalName="THIRD-PARTY-NOTICES.txt" />
+    <Content Include="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- Icon and bitmap are compiled into the exe (WPF resources) -->
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\logo.png" />
+  </ItemGroup>
+
+</Project>

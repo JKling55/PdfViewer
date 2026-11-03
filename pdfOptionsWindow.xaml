@@ -1,0 +1,38 @@
+<Window x:Class="PdfViewer.OptionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Options"
+        Icon="Assets/app.ico"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    <StackPanel Margin="20" MinWidth="400">
+
+        <GroupBox Header="Program instances" Padding="8">
+            <StackPanel>
+                <RadioButton x:Name="SingleRadio" GroupName="Instances" Margin="0,0,0,6"
+                             Content="Single instance (one window, starts at full screen)" />
+                <RadioButton x:Name="MultiRadio" GroupName="Instances"
+                             Content="Multiple instances (each window starts at half screen)" />
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Header="On startup" Padding="8" Margin="0,12,0,0">
+            <StackPanel>
+                <RadioButton x:Name="EmptyRadio" GroupName="Startup" Margin="0,0,0,6"
+                             Content="Start empty (no document open)" />
+                <RadioButton x:Name="ReopenRadio" GroupName="Startup"
+                             Content="Reopen the files that were open last time" />
+            </StackPanel>
+        </GroupBox>
+
+        <TextBlock Foreground="Gray" TextWrapping="Wrap" Margin="0,12,0,0"
+                   Text="Changes take effect the next time the program starts." />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="OK" Width="80" Margin="0,0,8,0" IsDefault="True" Click="Ok_Click" />
+            <Button Content="Cancel" Width="80" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

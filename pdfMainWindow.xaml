@@ -1,0 +1,47 @@
+<Window x:Class="PdfViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Klingeling PdfViewer" Height="800" Width="1150"
+        Icon="Assets/app.ico"
+        AllowDrop="True"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        PreviewDragOver="Window_PreviewDragOver"
+        Drop="Window_Drop">
+    <DockPanel>
+
+        <!-- Menu bar: File first, Help last -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem x:Name="FileMenu" Header="_File" SubmenuOpened="FileMenu_SubmenuOpened">
+                <MenuItem Header="_Open…" InputGestureText="Ctrl+O" Click="Open_Click" />
+                <MenuItem x:Name="CloseTabItem" Header="_Close Tab" InputGestureText="Ctrl+W"
+                          Click="CloseTab_Click" />
+                <MenuItem x:Name="CloseAllItem" Header="Close _All Tabs" Click="CloseAll_Click" />
+                <Separator />
+                <MenuItem x:Name="PrintItem" Header="_Print…" InputGestureText="Ctrl+P" Click="Print_Click" />
+                <Separator />
+                <!-- Filled in code: most recently opened files -->
+                <MenuItem x:Name="RecentMenu" Header="Open _Previous Files" />
+                <Separator />
+                <MenuItem Header="E_xit" InputGestureText="Alt+F4" Click="Exit_Click" />
+            </MenuItem>
+            <MenuItem Header="_Options" Click="Options_Click" />
+            <MenuItem Header="_Help">
+                <MenuItem Header="Open _Log Folder" Click="OpenLogFolder_Click" />
+                <Separator />
+                <MenuItem Header="_About…" Click="About_Click" />
+            </MenuItem>
+        </Menu>
+
+        <Grid>
+            <!-- One tab per open document; tabs are created in code -->
+            <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged" />
+
+            <!-- Shown while no document is open -->
+            <TextBlock x:Name="EmptyHint" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="Gray" FontSize="16" TextAlignment="Center"
+                       IsHitTestVisible="False"
+                       Text="Drop PDF files here or press Ctrl+O to open" />
+        </Grid>
+
+    </DockPanel>
+</Window>

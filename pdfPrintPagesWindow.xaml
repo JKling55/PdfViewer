@@ -1,0 +1,27 @@
+<Window x:Class="PdfViewer.PrintPagesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Print – Pages"
+        Icon="Assets/app.ico"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        FocusManager.FocusedElement="{Binding ElementName=PagesBox}">
+    <StackPanel Margin="20" MinWidth="360">
+
+        <RadioButton x:Name="AllRadio" GroupName="Range" IsChecked="True" Margin="0,0,0,8" />
+
+        <RadioButton x:Name="PagesRadio" GroupName="Range" Content="Pages:" />
+        <TextBox x:Name="PagesBox" Margin="20,4,0,0" TextChanged="PagesBox_TextChanged" />
+        <TextBlock Margin="20,2,0,0" Foreground="Gray"
+                   Text="Single pages and ranges, e.g.  1, 3, 7-9  or  5-  (to the end)" />
+        <TextBlock x:Name="ErrorText" Margin="20,6,0,0" Foreground="Firebrick" TextWrapping="Wrap"
+                   Visibility="Collapsed" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button Content="Next…" Width="80" Margin="0,0,8,0" IsDefault="True" Click="Next_Click" />
+            <Button Content="Cancel" Width="80" IsCancel="True" />
+        </StackPanel>
+    </StackPanel>
+</Window>

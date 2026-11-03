@@ -1,0 +1,17 @@
+<Window x:Class="PdfViewer.LicensesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Third-Party Licenses" Width="780" Height="580"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    <DockPanel Margin="12">
+        <Button DockPanel.Dock="Bottom" Content="Close" Width="80" Margin="0,10,0,0"
+                HorizontalAlignment="Right" IsDefault="True" IsCancel="True" Click="Close_Click" />
+
+        <!-- Read-only text with scroll bars; the license files use fixed-width line breaks -->
+        <TextBox x:Name="LicenseText" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
+                 TextWrapping="NoWrap"
+                 HorizontalScrollBarVisibility="Auto"
+                 VerticalScrollBarVisibility="Auto" />
+    </DockPanel>
+</Window>

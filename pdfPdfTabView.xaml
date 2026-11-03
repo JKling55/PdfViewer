@@ -1,0 +1,145 @@
+<UserControl x:Class="PdfViewer.PdfTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="View_Loaded" Unloaded="View_Unloaded">
+    <DockPanel>
+
+        <ToolBar DockPanel.Dock="Top">
+            <Button Content="◀" ToolTip="Previous page" Click="PrevPage_Click" Padding="8,2" />
+            <TextBox x:Name="PageBox" Width="44" TextAlignment="Center"
+                     VerticalContentAlignment="Center" Text="0"
+                     GotKeyboardFocus="PageBox_GotFocus" KeyDown="PageBox_KeyDown" />
+            <TextBlock x:Name="PageCountText" Text="/ 0" VerticalAlignment="Center" Margin="4,0,6,0" />
+            <Button Content="▶" ToolTip="Next page" Click="NextPage_Click" Padding="8,2" />
+            <Separator />
+
+            <!-- Rotate the view (symbols only) -->
+            <Button Content="↺" ToolTip="Rotate counterclockwise" Click="RotateLeft_Click"
+                    FontFamily="Segoe UI Symbol" FontSize="16" Padding="6,0" />
+            <Button Content="↻" ToolTip="Rotate clockwise" Click="RotateRight_Click"
+                    FontFamily="Segoe UI Symbol" FontSize="16" Padding="6,0" />
+            <Separator />
+
+            <TextBlock Text="Zoom:" VerticalAlignment="Center" Margin="4,0" />
+            <Slider x:Name="ZoomSlider" Width="160" Minimum="0.25" Maximum="3"
+                    Value="1" ValueChanged="Zoom_Changed" VerticalAlignment="Center" />
+            <TextBlock x:Name="ZoomText" Text="100 %" Width="48" Margin="6,0"
+                       VerticalAlignment="Center" />
+        </ToolBar>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock x:Name="StatusText" Text="" />
+        </StatusBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="270" MinWidth="120" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Side panel: table of contents + search -->
+            <TabControl x:Name="SideTabs" Grid.Column="0">
+                <TabItem Header="Contents">
+                    <Grid>
+                        <TreeView x:Name="OutlineTree" BorderThickness="0"
+                                  SelectedItemChanged="Outline_SelectedItemChanged">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                        <TextBlock x:Name="OutlineEmpty" Text="No table of contents"
+                                   Foreground="Gray" Margin="8" TextWrapping="Wrap" />
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Search">
+                    <Grid Margin="4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="SearchBox" Grid.Row="0" Grid.Column="0"
+                                 VerticalContentAlignment="Center" Padding="2"
+                                 KeyDown="SearchBox_KeyDown" />
+                        <Button Grid.Row="0" Grid.Column="1" Content="Find" ToolTip="F3 / Shift+F3: next / previous hit" Margin="4,0,0,0"
+                                Padding="8,2" Click="Search_Click" />
+                        <TextBlock x:Name="SearchStatus" Grid.Row="1" Grid.ColumnSpan="2"
+                                   Margin="0,4" Foreground="Gray" TextWrapping="Wrap" />
+                        <ListBox x:Name="HitsList" Grid.Row="2" Grid.ColumnSpan="2"
+                                 DisplayMemberPath="Display"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 SelectionChanged="Hit_Selected">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="ToolTip" Value="{Binding Display}" />
+                                    <EventSetter Event="PreviewMouseLeftButtonUp" Handler="HitItem_Click" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+
+            <!-- Page view -->
+            <ScrollViewer x:Name="Scroller" Grid.Column="2" Background="#FF6E6E6E"
+                          Focusable="True"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          ScrollChanged="Scroller_ScrollChanged"
+                          PreviewMouseWheel="Scroller_PreviewMouseWheel"
+                          PreviewMouseDown="Scroller_PreviewMouseDown">
+                <ItemsControl x:Name="Pages" HorizontalAlignment="Center">
+                    <ItemsControl.LayoutTransform>
+                        <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                    </ItemsControl.LayoutTransform>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,8" HorizontalAlignment="Center">
+                              <Grid>
+                                <Grid.LayoutTransform>
+                                    <RotateTransform Angle="{Binding Rotation}" />
+                                </Grid.LayoutTransform>
+                                <!-- White paper with drop shadow. The shadow effect sits on this
+                                     separate border, NOT on the image: an effect on the image would
+                                     re-rasterize it and make the text blurry. -->
+                                <Border Background="White">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.5" />
+                                    </Border.Effect>
+                                </Border>
+                                <!-- Layout size is fixed (page size at 100 %), the bitmap behind it
+                                     is swapped between placeholder and high-resolution version. -->
+                                <Image Source="{Binding Source}"
+                                       Width="{Binding Width, Mode=OneTime}"
+                                       Height="{Binding Height, Mode=OneTime}"
+                                       Stretch="Fill"
+                                       SnapsToDevicePixels="True"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                <!-- Search hit marks, drawn on top of the page. Coordinates are in
+                                     page layout units, so they scale together with the zoom. -->
+                                <Path Data="{Binding Highlights}" Fill="#66FFE000"
+                                      IsHitTestVisible="False" />
+                                <Path Data="{Binding CurrentHighlight}" Fill="#80FF8C00"
+                                      Stroke="#FFFF6A00" StrokeThickness="1"
+                                      IsHitTestVisible="False" />
+                              </Grid>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+    </DockPanel>
+</UserControl>
