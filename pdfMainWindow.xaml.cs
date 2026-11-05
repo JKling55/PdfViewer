@@ -313,6 +313,12 @@ public partial class MainWindow : Window
         // SelectionChanged of nested controls (e.g. the side tabs) bubbles up to here.
         if (!ReferenceEquals(e.OriginalSource, Tabs)) return;
 
+        // Diagnostics: every switch of the document tab is logged, so unexpected jumps can be traced.
+        string Name(System.Collections.IList items) =>
+            items.Count > 0 && items[0] is TabItem { Content: PdfTabView v }
+                ? Path.GetFileName(v.FilePath ?? "?") : "(none)";
+        AppLog.Write($"TAB switched: {Name(e.RemovedItems)} -> {Name(e.AddedItems)}");
+
         string? file = CurrentView?.FilePath;
         Title = file == null ? BaseTitle : $"{Path.GetFileName(file)} – {BaseTitle}";
     }

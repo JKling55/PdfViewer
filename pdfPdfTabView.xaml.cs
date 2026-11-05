@@ -67,6 +67,67 @@ public partial class PdfTabView : UserControl
         InitializeComponent();
         Pages.ItemsSource = _pages;
         HitsList.ItemsSource = _hits;
+        UpdateSidePanel(); // nothing to show yet: the side panel starts hidden
+    }
+
+    // ───────────────────────── Side panel ─────────────────────────
+
+    private GridLength _sideWidth = new(270); // remembered while the panel is hidden
+
+    // True after a search has finished (with or without hits): the Search tab then stays
+    // available, so the panel does not jump back to another tab when there are no hits.
+    private bool _searchPerformed;
+
+    /// <summary>
+    /// Shows the side panel only if it has content: the table of contents (if the document
+    /// has one) and/or search results. A tab without content is hidden as well.
+    /// </summary>
+    private void UpdateSidePanel()
+    {
+        bool hasContents = OutlineTree.Items.Count > 0;
+        bool hasSearch = _hits.Count > 0 || _searchPerformed;
+
+        ContentsTab.Visibility = hasContents ? Visibility.Visible : Visibility.Collapsed;
+        SearchTab.Visibility = hasSearch ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!hasContents && !hasSearch)
+        {
+            if (SideTabs.Visibility == Visibility.Visible)
+            {
+                if (SideColumn.Width.Value > 0) _sideWidth = SideColumn.Width; // keep the user's width
+                SideColumn.MinWidth = 0;
+                SideColumn.Width = new GridLength(0);
+                SideTabs.Visibility = Visibility.Collapsed;
+                SideSplitter.Visibility = Visibility.Collapsed;
+            }
+            return;
+        }
+
+        if (SideTabs.Visibility != Visibility.Visible)
+        {
+            SideColumn.MinWidth = 120;
+            SideColumn.Width = _sideWidth;
+            SideTabs.Visibility = Visibility.Visible;
+            SideSplitter.Visibility = Visibility.Visible;
+        }
+
+        // Make sure the selected tab is one that is visible.
+        if (SideTabs.SelectedItem is not TabItem { Visibility: Visibility.Visible })
+            SideTabs.SelectedItem = hasContents ? ContentsTab : SearchTab; // only if the selected tab vanished
+    }
+
+    // Diagnostics: logs which side tab is shown (also bubbles up from the hit list, hence the filter).
+    private void SideTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, SideTabs)) return;
+        AppLog.Write($"SIDE tab: {(SideTabs.SelectedItem as TabItem)?.Header} ({Path.GetFileName(_path ?? "?")})");
+    }
+
+    // Search status: in the (possibly hidden) side panel and always in the status bar.
+    private void ShowSearchStatus(string text)
+    {
+        SearchStatus.Text = text;
+        if (text.Length > 0) SetStatus(text);
     }
 
     public string? FilePath => _path;
@@ -154,7 +215,6 @@ public partial class PdfTabView : UserControl
         _loading = true;
         PageBox.Text = "0";
         PageCountText.Text = "/ 0";
-        OutlineEmpty.Visibility = Visibility.Visible;
 
         // PDFium is not thread-safe: only one document may render at a time.
         bool waiting = PdfiumLock.Gate.CurrentCount == 0;
@@ -223,7 +283,7 @@ public partial class PdfTabView : UserControl
             var outline = await outlineTask!;
             AppLog.Write($"LOAD outline ready ({outline.Count} top-level entries)");
             OutlineTree.ItemsSource = outline;
-            OutlineEmpty.Visibility = outline.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            UpdateSidePanel(); // show the panel if the document has a table of contents
 
             SetStatus($"{name} – {_pages.Count} pages");
         }
@@ -646,10 +706,9 @@ public partial class PdfTabView : UserControl
 
     // ───────────────────────── Search ─────────────────────────
 
-    /// <summary>Switches to the search tab and focuses the search box (Ctrl+F).</summary>
+    /// <summary>Focuses the search box in the toolbar (Ctrl+F).</summary>
     public void FocusSearch()
     {
-        SideTabs.SelectedIndex = 1;
         SearchBox.Focus();
         SearchBox.SelectAll();
     }
@@ -666,23 +725,26 @@ public partial class PdfTabView : UserControl
     private async Task SearchAsync()
     {
         string term = SearchBox.Text.Trim();
+        AppLog.Write($"SEARCH requested: \"{term}\" in {Path.GetFileName(_path ?? "?")}");
         if (_path == null || _searching) return;
         if (_loading)
         {
-            SearchStatus.Text = "Please wait, the document is still loading …";
+            ShowSearchStatus("Please wait, the document is still loading …");
             return;
         }
 
         // Remove the previous results and their marks on the pages.
         ClearSearchResults();
+        _searchPerformed = false;
         if (term.Length == 0)
         {
-            SearchStatus.Text = "";
+            ShowSearchStatus("");
+            UpdateSidePanel(); // old results are gone: hide the Search tab again
             return;
         }
 
         _searching = true;
-        SearchStatus.Text = "Searching …";
+        ShowSearchStatus("Searching …");
 
         try
         {
@@ -707,17 +769,23 @@ public partial class PdfTabView : UserControl
                     : hits.Count == 1 ? "1 hit" : $"{hits.Count} hits";
             else if (texts.All(string.IsNullOrWhiteSpace))
                 // No text layer at all: most likely a scanned document.
-                SearchStatus.Text = "No searchable text (possibly a scanned PDF).";
+                ShowSearchStatus("No searchable text (possibly a scanned PDF).");
             else
-                SearchStatus.Text = "No hits";
+                ShowSearchStatus("No hits");
         }
         catch (Exception ex)
         {
-            SearchStatus.Text = "Search failed: " + ex.Message;
+            ShowSearchStatus("Search failed: " + ex.Message);
         }
         finally
         {
             _searching = false;
+
+            // The Search tab is available now. Switch to it only when there are hits to show;
+            // otherwise the panel stays on the tab the user is looking at.
+            _searchPerformed = true;
+            UpdateSidePanel();
+            if (_hits.Count > 0) SideTabs.SelectedItem = SearchTab;
         }
     }
 

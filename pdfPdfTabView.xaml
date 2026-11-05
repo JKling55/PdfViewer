@@ -25,6 +25,14 @@
                     Value="1" ValueChanged="Zoom_Changed" VerticalAlignment="Center" />
             <TextBlock x:Name="ZoomText" Text="100 %" Width="48" Margin="6,0"
                        VerticalAlignment="Center" />
+            <Separator />
+
+            <!-- Search: results appear in the side panel -->
+            <TextBlock Text="Search:" VerticalAlignment="Center" Margin="4,0" />
+            <TextBox x:Name="SearchBox" Width="180" VerticalContentAlignment="Center" Padding="2"
+                     KeyDown="SearchBox_KeyDown" />
+            <Button Content="Find" ToolTip="Enter / F3 / Shift+F3: next / previous hit"
+                    Margin="4,0,0,0" Padding="8,2" Click="Search_Click" />
         </ToolBar>
 
         <StatusBar DockPanel.Dock="Bottom">
@@ -33,14 +41,15 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="270" MinWidth="120" />
+                <ColumnDefinition x:Name="SideColumn" Width="270" MinWidth="120" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Side panel: table of contents + search -->
-            <TabControl x:Name="SideTabs" Grid.Column="0">
-                <TabItem Header="Contents">
+            <!-- Side panel: table of contents + search results.
+                 Shown only while there is something to show (see UpdateSidePanel). -->
+            <TabControl x:Name="SideTabs" Grid.Column="0" SelectionChanged="SideTabs_SelectionChanged">
+                <TabItem x:Name="ContentsTab" Header="Contents">
                     <Grid>
                         <TreeView x:Name="OutlineTree" BorderThickness="0"
                                   SelectedItemChanged="Outline_SelectedItemChanged">
@@ -50,31 +59,19 @@
                                 </HierarchicalDataTemplate>
                             </TreeView.ItemTemplate>
                         </TreeView>
-                        <TextBlock x:Name="OutlineEmpty" Text="No table of contents"
-                                   Foreground="Gray" Margin="8" TextWrapping="Wrap" />
                     </Grid>
                 </TabItem>
 
-                <TabItem Header="Search">
+                <TabItem x:Name="SearchTab" Header="Search">
                     <Grid Margin="4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
 
-                        <TextBox x:Name="SearchBox" Grid.Row="0" Grid.Column="0"
-                                 VerticalContentAlignment="Center" Padding="2"
-                                 KeyDown="SearchBox_KeyDown" />
-                        <Button Grid.Row="0" Grid.Column="1" Content="Find" ToolTip="F3 / Shift+F3: next / previous hit" Margin="4,0,0,0"
-                                Padding="8,2" Click="Search_Click" />
-                        <TextBlock x:Name="SearchStatus" Grid.Row="1" Grid.ColumnSpan="2"
-                                   Margin="0,4" Foreground="Gray" TextWrapping="Wrap" />
-                        <ListBox x:Name="HitsList" Grid.Row="2" Grid.ColumnSpan="2"
+                        <TextBlock x:Name="SearchStatus" Grid.Row="0"
+                                   Margin="0,0,0,4" Foreground="Gray" TextWrapping="Wrap" />
+                        <ListBox x:Name="HitsList" Grid.Row="1"
                                  DisplayMemberPath="Display"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  SelectionChanged="Hit_Selected">
@@ -89,7 +86,7 @@
                 </TabItem>
             </TabControl>
 
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
+            <GridSplitter x:Name="SideSplitter" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
 
             <!-- Page view -->
             <ScrollViewer x:Name="Scroller" Grid.Column="2" Background="#FF6E6E6E"
